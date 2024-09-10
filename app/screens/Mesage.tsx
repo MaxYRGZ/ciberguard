@@ -21,19 +21,81 @@ const Mesage: React.FC = () => {
     });
 
     db.transaction((tx) => {
-      tx.executeSql('SELECT * FROM preguntas_respuestas', [], (tx, results) => {
+      tx.executeSql('SELECT * FROM preguntas_respuestas', [], async (tx, results) => {
         const rows = results.rows;
         let preguntasRespuestasList: PreguntaRespuesta[] = [];
         for (let i = 0; i < rows.length; i++) {
-          preguntasRespuestasList.push(rows.item(i));
+          const preguntaRespuesta = rows.item(i);
+          // Verifica si la respuesta está vacía
+          if (!preguntaRespuesta.respuesta || preguntaRespuesta.respuesta === 'No hay respuesta aún') {
+            // Busca la respuesta en la tabla posibles_respuestas
+            const respuestaExistente = await buscarRespuestaEnBD(db, preguntaRespuesta.pregunta);
+            if (respuestaExistente) {
+              // Actualiza la base de datos con la respuesta existente
+              await actualizarRespuestaEnBD(db, preguntaRespuesta.id, respuestaExistente);
+              preguntaRespuesta.respuesta = respuestaExistente;
+            } else {
+              preguntaRespuesta.respuesta = 'No hay respuesta aún';
+            }
+          } else {
+            preguntaRespuesta.respuesta = preguntaRespuesta.respuesta || 'No hay respuesta aún';
+          }
+          preguntasRespuestasList.push(preguntaRespuesta);
         }
-        console.log('Preguntas y respuestas fetched:', preguntasRespuestasList);
         setPreguntasRespuestas(preguntasRespuestasList);
       }, (error) => {
         console.error('Error executing SELECT query:', error);
       });
     });
   }, []);
+
+  // Función para buscar la respuesta en la base de datos
+  const buscarRespuestaEnBD = (db: SQLite.SQLiteDatabase, pregunta: string) => {
+    return new Promise<string | null>((resolve, reject) => {
+      db.transaction((tx) => {
+        tx.executeSql(
+          'SELECT respuesta FROM posibles_respuestas WHERE pregunta LIKE ?',
+          [`%${pregunta}%`],
+          (tx, results) => {
+            if (results.rows.length > 0) {
+              resolve(results.rows.item(0).respuesta);
+            } else {
+              resolve(null);
+            }
+          },
+          (error) => {
+            console.error('Error executing SELECT query in posibles_respuestas:', error);
+            reject(error);
+          }
+        );
+      });
+    });
+  };
+
+  // Función para actualizar la respuesta en la base de datos
+  const actualizarRespuestaEnBD = (db: SQLite.SQLiteDatabase, id: number, respuesta: string) => {
+    return new Promise<void>((resolve, reject) => {
+      db.transaction((tx) => {
+        tx.executeSql(
+          'UPDATE preguntas_respuestas SET respuesta = ? WHERE id = ?',
+          [respuesta, id],
+          (tx, results) => {
+            if (results.rowsAffected > 0) {
+              console.log('Respuesta actualizada en la base de datos');
+              resolve();
+            } else {
+              console.log('No se pudo actualizar la respuesta');
+              resolve();
+            }
+          },
+          (error) => {
+            console.error('Error actualizando la respuesta en la base de datos:', error);
+            reject(error);
+          }
+        );
+      });
+    });
+  };
 
   const handleDelete = (id: number) => {
     const db = SQLite.openDatabase({ name: 'ciberguard' }, () => {
@@ -70,11 +132,7 @@ const Mesage: React.FC = () => {
             <View key={item.id} style={styles.preguntaContainer}>
               <View style={styles.preguntaContent}>
                 <Text style={styles.preguntaText}>Pregunta: {item.pregunta}</Text>
-                {item.respuesta ? (
-                  <Text style={styles.respuestaText}>Respuesta: {item.respuesta}</Text>
-                ) : (
-                  <Text style={styles.respuestaText}>Respuesta: No hay respuesta aún</Text>
-                )}
+                <Text style={styles.respuestaText}>Respuesta: {item.respuesta}</Text>
               </View>
               <TouchableOpacity style={styles.deleteButton} onPress={() => handleDelete(item.id)}>
                 <Text style={styles.deleteButtonText}>X</Text>
@@ -143,4 +201,3 @@ const styles = StyleSheet.create({
 });
 
 export default Mesage;
-

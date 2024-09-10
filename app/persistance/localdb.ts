@@ -33,6 +33,32 @@ export default class LocalDB {
                 () => console.log('Created table PreguntasRespuestas'),
                 (error) => console.error('Error creating table PreguntasRespuestas:', error)
             );
+            tx.executeSql(
+                'CREATE TABLE IF NOT EXISTS posibles_respuestas (id INTEGER PRIMARY KEY AUTOINCREMENT, pregunta TEXT NOT NULL, respuesta TEXT)',
+                [],
+                () => console.log('Created table PosiblesRespuestas'),
+                (error) => console.error('Error creating table PosiblesRespuestas:', error)
+            );
+            
+            // Preguntas y respuestas sobre ciberseguridad
+            const data = [
+                { pregunta: '¿Qué es un virus informático?', respuesta: 'Un virus informático es un tipo de software malicioso que se propaga a través de archivos y puede dañar o alterar el funcionamiento de un sistema informático.' },
+                { pregunta: '¿Cómo puedo proteger mi contraseña?', respuesta: 'Utiliza contraseñas fuertes y únicas para cada cuenta, activa la autenticación de dos factores cuando esté disponible y cambia tus contraseñas regularmente.' },
+                { pregunta: '¿Qué es un firewall y por qué es importante?', respuesta: 'Un firewall es una barrera de seguridad que monitorea y controla el tráfico de red para prevenir accesos no autorizados a una red o dispositivo. Es importante para proteger contra ataques externos.' },
+                { pregunta: '¿Qué es el phishing?', respuesta: 'El phishing es un tipo de ataque en el que se intenta engañar al usuario para que revele información confidencial, como contraseñas o números de tarjeta de crédito, a través de correos electrónicos o sitios web falsos.' },
+                { pregunta: '¿Cómo puedo saber si mi dispositivo está infectado con malware?', respuesta: 'Busca signos como un rendimiento lento, anuncios inesperados o comportamiento extraño. Utiliza un software antivirus para escanear y eliminar posibles amenazas.' },
+                { pregunta: '¿Qué es la autenticación de dos factores?', respuesta: 'La autenticación de dos factores (2FA) es una capa adicional de seguridad que requiere dos formas de verificación antes de acceder a una cuenta, como una contraseña y un código enviado a tu teléfono.' },
+                { pregunta: '¿Por qué es importante actualizar regularmente mi software?', respuesta: 'Las actualizaciones de software a menudo incluyen parches de seguridad para vulnerabilidades conocidas. Mantener el software actualizado ayuda a proteger tu sistema contra amenazas emergentes.' },
+            ];
+            // Insertar los datos en la tabla
+            data.forEach(({ pregunta, respuesta }) => {
+                tx.executeSql(
+                    'INSERT INTO posibles_respuestas (pregunta, respuesta) VALUES (?, ?)',
+                    [pregunta, respuesta],
+                    () => console.log('Inserted data into PosiblesRespuestas'),
+                    (error) => console.error('Error inserting data into PosiblesRespuestas:', error)
+                );
+            });
 
             // Insertar algunos consejos sobre seguridad en internet
             const consejosSeguridad = [
