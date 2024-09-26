@@ -84,7 +84,7 @@ function Home(): React.JSX.Element {
           <TouchableOpacity
             style={styles.button}
             onPress={() => buttonOnPress('Ayuda')}>
-            <Text style={styles.buttonText}>Ayuda</Text>
+            <Text style={styles.buttonText}>Revisa mi dispositivo</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
