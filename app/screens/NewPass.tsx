@@ -6,12 +6,26 @@ function NewPass(): React.JSX.Element {
   const [password, setPassword] = useState('');
   const [minLength, setMinLength] = useState('8');
   const [maxLength, setMaxLength] = useState('16');
+  const [includeSpecial, setIncludeSpecial] = useState(true);
+  const [includeNumbers, setIncludeNumbers] = useState(true);
+  const [includeUppercase, setIncludeUppercase] = useState(true);
+  const [includeLowercase, setIncludeLowercase] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
   const [passwordName, setPasswordName] = useState('');
 
   const generatePassword = () => {
     const length = getRandomInt(parseInt(minLength), parseInt(maxLength));
-    const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+~`|}{[]:;?><,./-=';
+    let charset = '';
+    if (includeLowercase) charset += 'abcdefghijklmnopqrstuvwxyz';
+    if (includeUppercase) charset += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    if (includeNumbers) charset += '0123456789';
+    if (includeSpecial) charset += '!@#$%^&*()_+~`|}{[]:;?><,./-=';
+
+    if (charset === '') {
+      Alert.alert('Error', 'Debes seleccionar al menos un tipo de carácter.');
+      return;
+    }
+
     let newPassword = '';
     for (let i = 0; i < length; i++) {
       const randomIndex = Math.floor(Math.random() * charset.length);
@@ -32,19 +46,19 @@ function NewPass(): React.JSX.Element {
           'INSERT INTO contrasenas (nombre, contraseña) VALUES (?, ?)',
           [passwordName, password],
           () => {
-            Alert.alert( `Tu clave "${passwordName}" se guardo de manera exitosa.`);
+            Alert.alert(`Tu clave "${passwordName}" se guardó de manera exitosa.`);
             setModalVisible(false);
             setPasswordName('');
           },
           (error) => {
             console.error('Error saving password:', error);
-            Alert.alert('Error', 'There was an error saving the password.');
+            Alert.alert('Error', 'Hubo un error guardando la contraseña.');
           }
         );
       });
     } catch (error) {
       console.error('Error connecting to database:', error);
-      Alert.alert('Error', 'There was an error connecting to the database.');
+      Alert.alert('Error', 'Hubo un error conectando con la base de datos.');
     }
   };
 
@@ -59,7 +73,7 @@ function NewPass(): React.JSX.Element {
         <TextInput
           style={styles.input}
           value={password}
-          editable={false}
+          onChangeText={setPassword} // Esto permite la edición manual de la contraseña
           placeholderTextColor="rgb(134, 152, 185)"
           placeholder="Generated Password"
         />
@@ -67,6 +81,7 @@ function NewPass(): React.JSX.Element {
           <Text style={styles.buttonText}>Guardar</Text>
         </TouchableOpacity>
       </View>
+
       <View style={styles.lengthContainer2}>
         <Text style={styles.text2}>Min</Text>
         <Text style={styles.text2}>Max</Text>
@@ -78,7 +93,7 @@ function NewPass(): React.JSX.Element {
           onChangeText={setMinLength}
           keyboardType="numeric"
           placeholderTextColor="rgb(134, 152, 185)"
-          placeholder="Min Length"
+          placeholder="Num Min"
         />
         <TextInput
           style={styles.lengthInput}
@@ -86,13 +101,46 @@ function NewPass(): React.JSX.Element {
           onChangeText={setMaxLength}
           keyboardType="numeric"
           placeholderTextColor="rgb(134, 152, 185)"
-          placeholder="Max Length"
+          placeholder="Num Max"
         />
       </View>
+
+      {/* Botones para seleccionar qué caracteres incluir */}
+      <View style={styles.toggleContainer}>
+        <TouchableOpacity
+          style={[styles.toggleButton, includeLowercase ? styles.activeButton : styles.inactiveButton]}
+          onPress={() => setIncludeLowercase(!includeLowercase)}
+        >
+          <Text style={styles.toggleButtonText}>Minúsculas</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.toggleButton, includeUppercase ? styles.activeButton : styles.inactiveButton]}
+          onPress={() => setIncludeUppercase(!includeUppercase)}
+        >
+          <Text style={styles.toggleButtonText}>Mayúsculas</Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.toggleContainer}>
+        <TouchableOpacity
+          style={[styles.toggleButton, includeNumbers ? styles.activeButton : styles.inactiveButton]}
+          onPress={() => setIncludeNumbers(!includeNumbers)}
+        >
+          <Text style={styles.toggleButtonText}>Números</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.toggleButton, includeSpecial ? styles.activeButton : styles.inactiveButton]}
+          onPress={() => setIncludeSpecial(!includeSpecial)}
+        >
+          <Text style={styles.toggleButtonText}>Especiales</Text>
+        </TouchableOpacity>
+      </View>
+
       <TouchableOpacity style={styles.button2} onPress={generatePassword}>
         <Text style={styles.buttonText}>Generar clave</Text>
       </TouchableOpacity>
 
+      {/* Modal para guardar la contraseña */}
       <Modal visible={modalVisible} transparent={true} animationType="slide">
         <View style={styles.modalContainer}>
           <View style={styles.modalView}>
@@ -100,16 +148,17 @@ function NewPass(): React.JSX.Element {
             <TextInput
               style={styles.modalInput}
               value={passwordName}
+              placeholderTextColor="rgb(134, 152, 185)"
               onChangeText={setPasswordName}
-              placeholder="Password Name"
+              placeholder="Nombre de la contraseña"
             />
             <View style={styles.Buttoncont}>
-            <TouchableOpacity style={styles.modalButton} onPress={handleSavePassword}>
-              <Text style={styles.modalButtonText}>Guardar</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.modalButton, styles.modalCancelButton]} onPress={() => setModalVisible(false)}>
-              <Text style={styles.modalButtonText}>Cancel</Text>
-            </TouchableOpacity>
+              <TouchableOpacity style={styles.modalButton} onPress={handleSavePassword}>
+                <Text style={styles.modalButtonText}>Guardar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.modalButton, styles.modalCancelButton]} onPress={() => setModalVisible(false)}>
+                <Text style={styles.modalButtonText}>Cancelar</Text>
+              </TouchableOpacity>
             </View>
           </View>
         </View>
@@ -159,7 +208,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: '80%',
     marginBottom: 10,
-    
   },
   lengthContainer: {
     flexDirection: 'row',
@@ -183,8 +231,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     height: '35%',
     textAlign: 'center',
-    justifyContent:'center',
-
+    justifyContent: 'center',
   },
   button2: {
     backgroundColor: 'rgb(46, 79, 145)',
@@ -193,15 +240,36 @@ const styles = StyleSheet.create({
     width: '80%',
     margin: 3,
     height: '7%',
-
   },
   buttonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
     textAlign: 'center',
-    justifyContent:'center',
-  
+    justifyContent: 'center',
+  },
+  toggleContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '80%',
+    marginBottom: 20,
+  },
+  toggleButton: {
+    backgroundColor: 'rgb(134, 152, 185)',
+    padding: 10,
+    borderRadius: 5,
+    width: '45%',
+  },
+  activeButton: {
+    backgroundColor: 'rgb(46, 79, 145)',
+  },
+  inactiveButton: {
+    backgroundColor: 'rgb(134, 152, 185)',
+  },
+  toggleButtonText: {
+    color: 'white',
+    fontSize: 16,
+    textAlign: 'center',
   },
   modalContainer: {
     flex: 1,
@@ -214,44 +282,44 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     borderRadius: 10,
     padding: 20,
-    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.8,
+    shadowRadius: 2,
+    elevation: 5,
   },
   modalText: {
     fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 10,
+    marginBottom: 15,
+    textAlign: 'center',
+
   },
   modalInput: {
-    width: '100%',
-    padding: 10,
-    borderWidth: 1,
-    color: 'rgb(46, 79, 145)',
-    borderColor: '#ccc',
-    borderRadius: 5,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
     marginBottom: 20,
-    textAlign: 'center',
+    padding: 5,
+    fontSize: 16,
   },
   modalButton: {
     backgroundColor: 'rgb(46, 79, 145)',
     padding: 10,
     borderRadius: 5,
-    marginBottom: 10,
-    width: '40%',
+    textAlign: 'center',
+    justifyContent: 'center',
+    marginHorizontal: 10,
   },
   modalButtonText: {
     color: 'white',
     fontSize: 16,
-    fontWeight: 'bold',
-    textAlign:'center',
+    textAlign: 'center',
   },
   modalCancelButton: {
-    backgroundColor: 'rgb(46, 79, 145)',
+    backgroundColor: 'rgb(134, 152, 185)',
   },
   Buttoncont: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    width: '80%',
-    marginBottom: 20,
   },
 });
 
