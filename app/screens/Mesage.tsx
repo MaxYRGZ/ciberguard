@@ -21,25 +21,12 @@ const Mesage: React.FC = () => {
     });
 
     db.transaction((tx) => {
-      tx.executeSql('SELECT * FROM preguntas_respuestas', [], async (tx, results) => {
+      tx.executeSql('SELECT * FROM preguntas_respuestas', [], (tx, results) => {
         const rows = results.rows;
         let preguntasRespuestasList: PreguntaRespuesta[] = [];
         for (let i = 0; i < rows.length; i++) {
           const preguntaRespuesta = rows.item(i);
-          // Verifica si la respuesta está vacía
-          if (!preguntaRespuesta.respuesta || preguntaRespuesta.respuesta === 'No hay respuesta aún') {
-            // Busca la respuesta en la tabla posibles_respuestas
-            const respuestaExistente = await buscarRespuestaEnBD(db, preguntaRespuesta.pregunta);
-            if (respuestaExistente) {
-              // Actualiza la base de datos con la respuesta existente
-              await actualizarRespuestaEnBD(db, preguntaRespuesta.id, respuestaExistente);
-              preguntaRespuesta.respuesta = respuestaExistente;
-            } else {
-              preguntaRespuesta.respuesta = 'No hay respuesta aún';
-            }
-          } else {
-            preguntaRespuesta.respuesta = preguntaRespuesta.respuesta || 'No hay respuesta aún';
-          }
+          preguntaRespuesta.respuesta = preguntaRespuesta.respuesta || 'No hay respuesta aún';
           preguntasRespuestasList.push(preguntaRespuesta);
         }
         setPreguntasRespuestas(preguntasRespuestasList);
@@ -48,54 +35,6 @@ const Mesage: React.FC = () => {
       });
     });
   }, []);
-
-  // Función para buscar la respuesta en la base de datos
-  const buscarRespuestaEnBD = (db: SQLite.SQLiteDatabase, pregunta: string) => {
-    return new Promise<string | null>((resolve, reject) => {
-      db.transaction((tx) => {
-        tx.executeSql(
-          'SELECT respuesta FROM posibles_respuestas WHERE pregunta LIKE ?',
-          [`%${pregunta}%`],
-          (tx, results) => {
-            if (results.rows.length > 0) {
-              resolve(results.rows.item(0).respuesta);
-            } else {
-              resolve(null);
-            }
-          },
-          (error) => {
-            console.error('Error executing SELECT query in posibles_respuestas:', error);
-            reject(error);
-          }
-        );
-      });
-    });
-  };
-
-  // Función para actualizar la respuesta en la base de datos
-  const actualizarRespuestaEnBD = (db: SQLite.SQLiteDatabase, id: number, respuesta: string) => {
-    return new Promise<void>((resolve, reject) => {
-      db.transaction((tx) => {
-        tx.executeSql(
-          'UPDATE preguntas_respuestas SET respuesta = ? WHERE id = ?',
-          [respuesta, id],
-          (tx, results) => {
-            if (results.rowsAffected > 0) {
-              console.log('Respuesta actualizada en la base de datos');
-              resolve();
-            } else {
-              console.log('No se pudo actualizar la respuesta');
-              resolve();
-            }
-          },
-          (error) => {
-            console.error('Error actualizando la respuesta en la base de datos:', error);
-            reject(error);
-          }
-        );
-      });
-    });
-  };
 
   const handleDelete = (id: number) => {
     const db = SQLite.openDatabase({ name: 'ciberguard' }, () => {
@@ -110,15 +49,15 @@ const Mesage: React.FC = () => {
         [id],
         (tx, results) => {
           if (results.rowsAffected > 0) {
-            Alert.alert('Success', 'Pregunta eliminada.');
+            Alert.alert('Success', 'Eliminado.');
             setPreguntasRespuestas((prev) => prev.filter((item) => item.id !== id));
           } else {
-            Alert.alert('Error', 'Hubo un problema al eliminar la pregunta.');
+            Alert.alert('Error', 'Hubo un problema al eliminar.');
           }
         },
         (error) => {
           console.error('Error executing DELETE query:', error);
-          Alert.alert('Error', 'Hubo un problema al eliminar la pregunta.');
+          Alert.alert('Error', 'Hubo un problema al eliminar .');
         }
       );
     });
@@ -131,8 +70,8 @@ const Mesage: React.FC = () => {
           preguntasRespuestas.map((item) => (
             <View key={item.id} style={styles.preguntaContainer}>
               <View style={styles.preguntaContent}>
-                <Text style={styles.preguntaText}>Pregunta: {item.pregunta}</Text>
-                <Text style={styles.respuestaText}>Respuesta: {item.respuesta}</Text>
+                <Text style={styles.preguntaText}>{item.pregunta}</Text>
+                <Text style={styles.respuestaText}>{item.respuesta}</Text>
               </View>
               <TouchableOpacity style={styles.deleteButton} onPress={() => handleDelete(item.id)}>
                 <Text style={styles.deleteButtonText}>X</Text>
@@ -140,7 +79,7 @@ const Mesage: React.FC = () => {
             </View>
           ))
         ) : (
-          <Text style={styles.noPreguntasText}>No has hecho ninguna pregunta</Text>
+          <Text style={styles.noPreguntasText}>Aún no se analiza ningún archivo</Text>
         )}
       </ScrollView>
     </View>
@@ -173,12 +112,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   preguntaText: {
-    fontSize: 20,
+    fontSize: 22,
     color: 'white',
   },
   respuestaText: {
-    fontSize: 18,
-    color: 'white',
+    fontSize: 16,
+    color: '#CCCCCC',
     marginTop: 5,
   },
   noPreguntasText: {

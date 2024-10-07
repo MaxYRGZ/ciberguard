@@ -34,7 +34,7 @@ const App = (): React.JSX.Element => {
         <Stack.Screen name="NewPass" component={NewPass} options={{ title: 'Generador de claves' }} />
         <Stack.Screen name="Tips" component={Tips} options={{ title: 'Consejos de seguridad' }} />
         <Stack.Screen name="Help" component={Help} options={{ title: 'Ayuda' }} />
-        <Stack.Screen name="Mesage" component={Mesage} options={{ title: 'Notificaciones' }} />
+        <Stack.Screen name="Mesage" component={Mesage} options={{ title: 'Archivos analizados' }} />
         <Stack.Screen name="Answer" component={Answer} options={{ headerShown:false }} />
       </Stack.Navigator>
     </NavigationContainer>

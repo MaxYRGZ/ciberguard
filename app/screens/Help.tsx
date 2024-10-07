@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, Image } from 'react-native';
 import DocumentPicker from 'react-native-document-picker';
+import SQLite from 'react-native-sqlite-storage';
 
 const Help: React.FC = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -14,15 +15,15 @@ const Help: React.FC = () => {
     try {
       // Primero seleccionamos el archivo
       const file = await DocumentPicker.pick({
-        type: [DocumentPicker.types.allFiles], // Puedes especificar el tipo de archivos a seleccionar
+        type: [DocumentPicker.types.allFiles],
       });
-      
+
       setSelectedFile(file[0]); // Guarda el archivo seleccionado
       Alert.alert('Archivo seleccionado', `Has seleccionado ${file[0].name}`);
-  
+
       // Iniciar el análisis del archivo seleccionado
       setIsAnalyzing(true);
-  
+
       let formData = new FormData();
       formData.append('apikey', VIRUSTOTAL_API_KEY);
       formData.append('file', {
@@ -30,59 +31,47 @@ const Help: React.FC = () => {
         type: file[0].type,
         name: file[0].name,
       });
-  
+
       // Subir archivo para análisis a VirusTotal
       const uploadResponse = await fetch('https://www.virustotal.com/vtapi/v2/file/scan', {
         method: 'POST',
         body: formData,
       });
-  
-      // Verificar si la respuesta es correcta
+
       if (!uploadResponse.ok) {
         throw new Error(`Error en la respuesta de la API: ${uploadResponse.status}`);
       }
-  
-      const uploadResultText = await uploadResponse.text(); // Primero obtenemos el texto
-      let uploadResult;
-      
-      try {
-        uploadResult = JSON.parse(uploadResultText); // Intentamos parsear el JSON
-      } catch (e) {
-        console.error('Error al parsear el JSON:', e);
-        throw new Error('La respuesta de VirusTotal no es un JSON válido.');
-      }
-  
-      // Chequeamos si el scan_id está presente
+
+      const uploadResult = await uploadResponse.json();
       if (!uploadResult.scan_id) {
         throw new Error('Error al enviar archivo a VirusTotal');
       }
-  
+
       // Obtener el reporte del análisis usando el `scan_id`
       const reportResponse = await fetch(
         `https://www.virustotal.com/vtapi/v2/file/report?apikey=${VIRUSTOTAL_API_KEY}&resource=${uploadResult.scan_id}`
       );
-  
+
       if (!reportResponse.ok) {
         throw new Error(`Error en la respuesta de la API: ${reportResponse.status}`);
       }
-  
-      const reportResultText = await reportResponse.text(); // De nuevo, obtenemos el texto primero
-      let reportResult;
-  
-      try {
-        reportResult = JSON.parse(reportResultText); // Intentamos parsear el JSON
-      } catch (e) {
-        console.error('Error al parsear el JSON del reporte:', e);
-        throw new Error('El reporte de VirusTotal no es un JSON válido.');
-      }
-  
+
+      const reportResult = await reportResponse.json();
+
+      let virusStatus;
       if (reportResult.positives > 0) {
-        setVirusFound(reportResult.scans['SomeAntivirusEngine'].result); // Actualiza con el nombre del virus encontrado
-        Alert.alert('Virus Detectado', `Se ha encontrado ${reportResult.scans['SomeAntivirusEngine'].result} en tu archivo.`);
+        virusStatus = `Virus encontrado: ${reportResult.scans['SomeAntivirusEngine'].result}`;
+        setVirusFound(virusStatus);
       } else {
+        virusStatus = 'No se encontraron virus';
         setVirusFound(null);
-        Alert.alert('Análisis Completo', 'No se encontraron virus en el archivo.');
       }
+
+      // Guardar los resultados en la base de datos
+      await guardarPreguntaRespuestaEnBD(file[0].name, virusStatus);
+
+      Alert.alert('Análisis Completo', virusStatus);
+
     } catch (err) {
       if (DocumentPicker.isCancel(err)) {
         Alert.alert('Cancelado', 'No seleccionaste ningún archivo.');
@@ -94,7 +83,39 @@ const Help: React.FC = () => {
       setIsAnalyzing(false);
     }
   };
-  
+
+  // Función para guardar la pregunta (nombre del archivo) y la respuesta (resultado del análisis) en la base de datos
+  const guardarPreguntaRespuestaEnBD = (pregunta: string, respuesta: string) => {
+    const db = SQLite.openDatabase({ name: 'ciberguard' }, () => {
+      console.log('Database opened');
+    }, (error) => {
+      console.error('Error opening database:', error);
+    });
+
+    db.transaction((tx) => {
+      tx.executeSql(
+        'CREATE TABLE IF NOT EXISTS preguntas_respuestas (id INTEGER PRIMARY KEY AUTOINCREMENT, pregunta TEXT NOT NULL, respuesta TEXT)',
+        [],
+        () => console.log('Tabla preguntas_respuestas creada o ya existente'),
+        (error) => console.error('Error creando la tabla preguntas_respuestas:', error)
+      );
+
+      tx.executeSql(
+        'INSERT INTO preguntas_respuestas (pregunta, respuesta) VALUES (?, ?)',
+        [pregunta, respuesta],
+        (tx, results) => {
+          if (results.rowsAffected > 0) {
+            console.log('Pregunta y respuesta guardadas en la base de datos');
+          } else {
+            console.log('No se pudo guardar la pregunta y respuesta');
+          }
+        },
+        (error) => {
+          console.error('Error al insertar pregunta y respuesta en la base de datos:', error);
+        }
+      );
+    });
+  };
 
   return (
     <View style={styles.container}>
@@ -124,6 +145,8 @@ const Help: React.FC = () => {
     </View>
   );
 };
+
+
 
 const styles = StyleSheet.create({
   container: {
