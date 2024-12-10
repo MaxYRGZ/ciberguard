@@ -24,6 +24,40 @@ This repository is essential for the development and maintenance of the CiberGua
 - Integration with ChatGPT to answer security-related questions
 - Viewing and managing AI responses
 
+## Prerequisites
+
+Before running the project, ensure that the following prerequisites are met:
+
+1. **Install Node.js and npm**  
+   Ensure you have Node.js (version 14 or above) and npm installed on your system. Download it from the [official Node.js website](https://nodejs.org/).
+
+2. **Install Java Development Kit (JDK)**  
+   Install JDK 8 or above, which is required for Android development. You can download it from the [Oracle website](https://www.oracle.com/java/technologies/javase-downloads.html) or use OpenJDK.
+
+3. **Install Android Studio**  
+   - Download and install [Android Studio](https://developer.android.com/studio).  
+   - Configure the Android SDK during installation, ensuring the following packages are installed via the SDK Manager:
+     - **Android SDK Platform**
+     - **Android SDK Tools**
+     - **Android SDK Build-Tools**
+     - **Google Play Services**
+   - Set the `ANDROID_HOME` environment variable to point to your Android SDK directory.
+
+4. **Install React Native CLI**  
+   Install the React Native CLI globally:
+   ```bash
+   npm install -g react-native-cli
+   ```
+
+5. **Enable USB Debugging (Optional for Android Physical Devices)**  
+   If you’re testing on a physical Android device, ensure USB Debugging is enabled in the developer options.
+
+6. **Install Watchman (for macOS)**  
+   macOS users should install Watchman, as it's required for optimal performance:
+   ```bash
+   brew install watchman
+   ```
+
 ## Installation
 
 1. Clone the repository and navigate to the project directory:
