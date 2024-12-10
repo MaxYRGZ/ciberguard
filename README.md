@@ -36,7 +36,7 @@ Before running the project, ensure that the following prerequisites are met:
 
 3. **Install Android Studio**  
    - Download and install [Android Studio](https://developer.android.com/studio).  
-   - Configure the Android SDK during installation, ensuring the following packages are installed via the SDK Manager:
+   - Configure the Android SDK 34 during installation, ensuring the following packages are installed via the SDK Manager:
      - **Android SDK Platform**
      - **Android SDK Tools**
      - **Android SDK Build-Tools**
