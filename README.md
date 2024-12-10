@@ -84,12 +84,13 @@ Before running the project, ensure that the following prerequisites are met:
 
 1. Start the Metro bundler:
    ```bash
-   npx react-native start
+   npm start
    ```
 
 2. Run the app on Android:
    ```bash
-   npx react-native run-android
+   npm start
+   a
    ```
 
 ## Building a Release APK
