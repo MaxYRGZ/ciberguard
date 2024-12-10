@@ -52,11 +52,6 @@ Before running the project, ensure that the following prerequisites are met:
 5. **Enable USB Debugging (Optional for Android Physical Devices)**  
    If you’re testing on a physical Android device, ensure USB Debugging is enabled in the developer options.
 
-6. **Install Watchman (for macOS)**  
-   macOS users should install Watchman, as it's required for optimal performance:
-   ```bash
-   brew install watchman
-   ```
 
 ## Installation
 
